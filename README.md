@@ -16,10 +16,10 @@ la nota.
 
 | Nombre completo | Código |
 |---|---|
-| | |
-| | |
-| | |
-| | |
+|Juan Alejandro Askar Patiño|2559797-3743|
+|Jhoan Sebastián Lopez Gomez|2559762-3743|
+|Santiago Alfonso Vargas Espitia|2559962-3743|
+|Juan Camilo García Solarte|2559819-3743|
 
 ## Cómo está organizado el proyecto
 
