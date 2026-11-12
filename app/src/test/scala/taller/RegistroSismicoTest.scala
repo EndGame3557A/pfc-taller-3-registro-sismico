@@ -163,8 +163,8 @@ class RegistroSismicoTest extends AnyFunSuite {
   test("informe: el resumen de las tres regiones") {
     assert(informe(registro, 3.0) ==
       Map("Valle" -> Resumen(3, 5.3, 3),
-          "Santander" -> Resumen(2, 5.1, 3),
-          "Choco" -> Resumen(2, 6.0, 4)))
+        "Santander" -> Resumen(2, 5.1, 3),
+        "Choco" -> Resumen(2, 6.0, 4)))
   }
 
   test("informe: el registro vacío da el mapa vacío") {
@@ -184,5 +184,209 @@ class RegistroSismicoTest extends AnyFunSuite {
   test("informe: las réplicas coinciden con replicasSensibles del más fuerte") {
     assert(informe(registro, 3.0)("Choco").replicas ==
       replicasSensibles(6.0, 3.0).length)
+  }
+
+
+
+
+
+  //NUEVOS TEST
+
+
+  // Punto 1
+  test("fuertes: umbral bajo incluye todos los sismos del registro") {
+    assert(fuertes(registro, 0.0).length == registro.length)
+  }
+
+  test("fuertes: registro vacío retorna lista vacía para cualquier umbral") {
+    assert(fuertes(vacio, 2.0) == List())
+  }
+
+  test("enRegion: retorna las magnitudes respetando el orden original del registro") {
+    val regCustom = List(Sismo(Fecha(2025, 1), "Antioquia", 4.5, 10), Sismo(Fecha(2025, 1), "Antioquia", 2.1, 10))
+    assert(enRegion(regCustom, "Antioquia") == List(4.5, 2.1))
+  }
+
+  test("enRegion: región con un solo sismo retorna lista de un elemento") {
+    val regCustom = List(Sismo(Fecha(2025, 1), "Bogota", 3.4, 5))
+    assert(enRegion(regCustom, "Bogota") == List(3.4))
+  }
+
+  test("paresCercanos: con diferencia cero estricta si hay sismos idénticos") {
+    val regCustom = List(Sismo(Fecha(2025, 1), "A", 4.0, 10), Sismo(Fecha(2025, 1), "B", 4.0, 10))
+    assert(paresCercanos(regCustom, 0.0) == List(("A", "B")))
+  }
+
+  test("paresCercanos: sobre registro vacío retorna lista vacía") {
+    assert(paresCercanos(vacio, 2.0) == List())
+  }
+
+  test("paresCercanos: orden de aparición en tuplas respeta el orden de las regiones") {
+    val regCustom = List(Sismo(Fecha(2025, 1), "Zeta", 5.0, 10), Sismo(Fecha(2025, 1), "Alfa", 5.0, 10))
+    assert(paresCercanos(regCustom, 0.0) == List(("Zeta", "Alfa")))
+  }
+
+  test("paresCercanos: umbral amplio detecta múltiples relaciones cruzadas") {
+    assert(paresCercanos(registro, 5.0).length == 3)
+  }
+
+  // Punto 2
+  test("porRegion: registro vacío produce mapa vacío") {
+    assert(porRegion(vacio) == Map())
+  }
+
+  test("porRegion: cada lista agrupada contiene los sismos correctos de esa región") {
+    val grupos = porRegion(registro)
+    assert(grupos("Valle").forall(_.region == "Valle"))
+    assert(grupos("Santander").forall(_.region == "Santander"))
+  }
+
+  test("conteoPorRegion: la suma de conteos es igual al tamaño total del registro") {
+    val conteos = conteoPorRegion(registro)
+    assert(conteos.values.sum == registro.length)
+  }
+
+  test("conteoPorRegion: registro con una sola región mapea un único elemento") {
+    val regCustom = List(Sismo(Fecha(2025, 1), "Meta", 4.0, 10), Sismo(Fecha(2025, 1), "Meta", 3.0, 10))
+    assert(conteoPorRegion(regCustom) == Map("Meta" -> 2))
+  }
+
+  test("magnitudMaxima: registro vacío retorna mapa vacío") {
+    assert(magnitudMaxima(vacio) == Map())
+  }
+
+  test("magnitudMaxima: si todos tienen la misma magnitud, esa es la máxima") {
+    val regCustom = List(Sismo(Fecha(2025, 1), "Tolima", 4.5, 10), Sismo(Fecha(2025, 1), "Tolima", 4.5, 12))
+    assert(magnitudMaxima(regCustom) == Map("Tolima" -> 4.5))
+  }
+
+  test("porRegion: claves del mapa coinciden exactamente con las regiones distintas") {
+    val regionesUnicas = registro.map(_.region).distinct.toSet
+    assert(porRegion(registro).keySet == regionesUnicas)
+  }
+
+  test("conteoPorRegion: las claves corresponden a las regiones presentes") {
+    assert(conteoPorRegion(registro).keySet.subsetOf(registro.map(_.region).toSet))
+  }
+
+  // Punto 3
+  test("conteoSeguro: multiples consultas a regiones inexistentes responden cero") {
+    val seguro = conteoSeguro(registro)
+    assert(seguro("Vichada") == 0)
+    assert(seguro("Guainia") == 0)
+  }
+
+  test("conteoSeguro: sobre registro vacío multiples regiones responden cero") {
+    val seguroVacio = conteoSeguro(vacio)
+    assert(seguroVacio("Valle") == 0)
+    assert(seguroVacio("Choco") == 0)
+  }
+
+  test("maximaDe: región existente conocida retorna Some con el valor correcto") {
+    assert(maximaDe(registro, "Valle") == Some(5.3))
+  }
+
+  test("maximaDe: registro vacío devuelve None para cualquier región") {
+    assert(maximaDe(vacio, "Valle") == None)
+  }
+
+  test("regionMasActiva: región única devuelve esa misma región") {
+    val regCustom = List(Sismo(Fecha(2025, 1), "Nariño", 3.5, 10))
+    assert(regionMasActiva(regCustom) == Some("Nariño"))
+  }
+
+  test("regionMasActiva: empate entre tres regiones selecciona la menor alfabéticamente") {
+    val empateTres = List(
+      Sismo(Fecha(2025, 1), "Caldas", 4.0, 10),
+      Sismo(Fecha(2025, 1), "Antioquia", 4.0, 10),
+      Sismo(Fecha(2025, 1), "Boyaca", 4.0, 10)
+    )
+    assert(regionMasActiva(empateTres) == Some("Antioquia"))
+  }
+
+  test("conteoSeguro: mapa por defecto funciona como Map normal para conocidas") {
+    assert(conteoSeguro(registro)("Santander") == 2)
+  }
+
+  test("maximaDe: Santander retorna su máximo correcto") {
+    assert(maximaDe(registro, "Santander") == Some(5.1))
+  }
+
+  // Punto 4
+  test("replicas: primer elemento con magnitud decimal compleja se redondea bien") {
+    assert(replicas(4.567).head == 4.57)
+  }
+
+  test("replicas: toma de elementos medianos mantiene la progresión multiplicativa") {
+    val elems = replicas(10.0).take(3).toList
+    assert(elems == List(10.0, 8.0, 6.4))
+  }
+
+  test("replicas: perezosidad permite tomar una gran cantidad de elementos sin desbordar") {
+    val lazySeq = replicas(8.0)
+    assert(lazySeq.drop(100).head.isInstanceOf[Double])
+  }
+
+  test("replicasSensibles: valor ligeramente superior al mínimo incluye el elemento") {
+    assert(replicasSensibles(5.0, 3.99) == List(5.0, 4.0))
+  }
+
+  test("replicasSensibles: con umbral cero incluye multiples elementos positivos") {
+    assert(replicasSensibles(2.0, 0.0).length > 2)
+  }
+
+  test("replicasSensibles: magnitud inicial menor al mínimo retorna lista vacía") {
+    assert(replicasSensibles(1.0, 1.5) == List())
+  }
+
+  test("replicas: elemento individual de cabeza coincide con el argumento inicial redondeado") {
+    val mag = 6.255
+    assert(replicas(mag).head == redondear(mag))
+  }
+
+  test("replicasSensibles: elementos devueltos cumplen estrictamente la condición de ser mayores al mínimo") {
+    val res = replicasSensibles(6.0, 2.5)
+    assert(res.forall(_ > 2.5))
+  }
+
+  // Punto 5
+  test("informe: registro vacío con cualquier umbral retorna mapa vacío") {
+    assert(informe(vacio, 4.0) == Map())
+  }
+
+  test("informe: claves del mapa de informe corresponden exactamente a las regiones") {
+    assert(informe(registro, 3.0).keySet == porRegion(registro).keySet)
+  }
+
+  test("informe: validación cruzada de máximas con funcion magnitudMaxima") {
+    val inf = informe(registro, 2.0)
+    val maxs = magnitudMaxima(registro)
+    assert(inf.forall { case (reg, res) => res.maxima == maxs(reg) })
+  }
+
+  test("informe: validación cruzada de conteos con funcion conteoPorRegion") {
+    val inf = informe(registro, 2.0)
+    val conteos = conteoPorRegion(registro)
+    assert(inf.forall { case (reg, res) => res.sismos == conteos(reg) })
+  }
+
+  test("informe: con umbral muy alto, las réplicas por región pueden reducirse a cero") {
+    val inf = informe(registro, 10.0)
+    assert(inf.values.forall(_.replicas == 0))
+  }
+
+  test("informe: estructura de Resumen se crea correctamente para una región simple") {
+    val regCustom = List(Sismo(Fecha(2025, 1), "Cundinamarca", 4.0, 10))
+    val inf = informe(regCustom, 2.0)
+    assert(inf("Cundinamarca") == Resumen(1, 4.0, replicasSensibles(4.0, 2.0).length))
+  }
+
+  test("informe: número de réplicas es no negativo para cualquier umbral razonable") {
+    val inf = informe(registro, 3.0)
+    assert(inf.values.forall(_.replicas >= 0))
+  }
+
+  test("informe: la cantidad de entradas en el mapa de informe coincide con el total de regiones") {
+    assert(informe(registro, 3.0).size == 3)
   }
 }
