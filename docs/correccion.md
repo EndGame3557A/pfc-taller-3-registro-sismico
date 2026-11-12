@@ -1,279 +1,98 @@
-# Ejemplo de informe de corrección
 
-Fundamentos de Programación Funcional y Concurrente.
-Documento realizado por el docente Juan Francisco Díaz.
+# Informe de Corrección
 
-## 1. Argumentar la corrección de programas recursivos
+---
 
-Sea $f : A \to B$ una función, y $A$ un conjunto definido recursivamente
-(recordar la definición de Matemáticas Discretas I), como por ejemplo los
-naturales o las listas.
+## 1. Definiciones Formales del Dominio
 
-Sea $P_f$ un programa recursivo (lineal o en árbol) desarrollado en Scala (o en
-cualquier lenguaje de programación) hecho para calcular $f$:
+Sea $\mathcal{S}$ el conjunto de todos los registros sísmicos posibles, donde cada sismo $s \in \mathcal{S}$ se modela como una tupla:
 
-```scala
-def Pf(a: A): B = { // Pf recibe a de tipo A, y devuelve f(a) de tipo B
-  ...
-}
-```
+$$s = (f, \text{reg}, m, p) \in \text{Fecha} \times \text{String} \times \mathbb{R} \times \mathbb{Z}$$
 
-¿Cómo argumentar que $P_f(a)$ siempre devuelve $f(a)$ como respuesta? Es decir,
-¿cómo argumentar que $P_f$ es correcto con respecto a su especificación?
+Donde las proyecciones de cada elemento están dadas por:
+* $\pi_{\text{reg}}(s) = s.\text{region}$
+* $\pi_{m}(s) = s.\text{magnitud}$
 
-La respuesta es sencilla: demostrando el siguiente teorema.
+Sea $R = [s_1, s_2, \ldots, s_n]$ una lista finita de sismos ($R \in \text{List}[\mathcal{S}]$), y sea $C_R = \{s_1, s_2, \ldots, s_n\}$ el multiconjunto asociado a los elementos de $R$.
 
-```math
-\forall a \in A : P_f(a) == f(a)
-```
+---
 
-Cuando uno tiene que demostrar que algo se cumple para todos los elementos de
-un conjunto definido recursivamente, es natural usar inducción estructural. En
-términos prácticos, esto significa demostrar que:
+## 2. Corrección de las Funciones Implementadas
 
-- Para cada valor básico $a$ de $A$, se tiene que $P_f(a) == f(a)$.
-- Para cada valor $a \in A$ construido recursivamente a partir de otro(s)
-  valor(es) $a' \in A$, se tiene que
-  $P_f(a') == f(a') \rightarrow P_f(a) == f(a)$. (Esta es la hipótesis de
-  inducción).
+A diferencia de los programas imperativos o recursivos explícitos, las funciones de este taller están formuladas mediante **especificaciones declarativas** (comprensiones `for`, transformaciones sobre mapas y evaluación perezosa), donde la implementación coincide directamente con la definición matemática de los conjuntos y relaciones buscadas.
 
-### Ejemplo: factorial recursivo
+### 2.1. Punto 1: Consultas con expresiones `for`
 
-Sea $f : \mathbb{N} \to \mathbb{N}$ la función que calcula el factorial de un
-número natural, es decir, $f(n) = n!$. Y sea $P_f$ el siguiente programa en
-Scala:
+#### a) `fuertes(r, umbral)`
+* **Especificación matemática:**
+  $$f_{\text{fuertes}}(R, u) = \left[ \pi_{\text{reg}}(s) \;\middle|\; s \in R \land \pi_m(s) > u \right]$$
+* **Argumento de corrección:** La expresión `for { s <- r if s.magnitud > umbral } yield s.region` se traduce en una operación de filtrado (`withFilter`) seguida de una proyección (`map`). Por definición, conserva todos y únicamente los elementos $s \in R$ que satisfacen el predicado $P(s) \equiv \pi_m(s) > u$, manteniendo sus multiplicidades y proyectando su atributo de región.
 
-```scala
-def Pf(n: Int): Int = { // Pf recibe n de tipo Int, y devuelve n! de tipo Int
-  if (n == 0) 1 else n * Pf(n - 1)
-}
-```
+#### b) `enRegion(r, region)`
+* **Especificación matemática:**
+  $$f_{\text{enRegion}}(R, \rho) = \left[ \pi_m(s) \;\middle|\; s \in R \land \pi_{\text{reg}}(s) = \rho \right]$$
+* **Argumento de corrección:** El filtro selecciona el subconjunto de eventos cuya región coincide exactamente con $\rho$, y `yield s.magnitud` aplica la proyección $\pi_m$ sobre cada elemento filtrado. Si ningún elemento cumple $\pi_{\text{reg}}(s) = \rho$, el resultado es la lista vacía $[\,]$.
 
-Vamos a demostrar que $\forall n \in \mathbb{N} : P_f(n) == n!$
+#### c) `paresCercanos(r, dif)`
+* **Especificación matemática:** Sea $\mathcal{U}(R) = [\rho_1, \rho_2, \ldots, \rho_k]$ la secuencia de regiones únicas de $R$ según su primera aparición. Definimos el predicado de cercanía entre dos regiones $a, b$:
+  $$\text{Cercanos}(a, b, d) \iff \exists x, y \in R : \left( \pi_{\text{reg}}(x) = a \land \pi_{\text{reg}}(y) = b \land |\pi_m(x) - \pi_m(y)| \leq d \right)$$
+  Entonces:
+  $$f_{\text{pares}}(R, d) = \left[ (\rho_i, \rho_j) \;\middle|\; 0 \leq i < j < k \land \text{Cercanos}(\rho_i, \rho_j, d) \right]$$
+* **Argumento de corrección:**
+  1. **Sin duplicados ni simétricos:** Al restringir los índices a $0 \leq i < j < k$ sobre la lista sin duplicados $\mathcal{U}(R)$, se garantiza que $\rho_i \neq \rho_j$ (no hay pares de una región consigo misma) y que cada par no ordenado $\{\rho_i, \rho_j\}$ se evalúa una única vez (evitando tanto $(\rho_i, \rho_j)$ como $(\rho_j, \rho_i)$).
+  2. **Existencialidad:** La función auxiliar `hayCercanos(a, b)` verifica que la comprensión del producto cartesiano filtrado no sea vacía (`!isEmpty`), lo cual es lógicamente equivalente al cuantificador existencial $\exists x, y$.
 
-**Caso base:** $n = 0$
+---
 
-```math
-P_f(0) \rightarrow \text{if } (0 == 0)\ 1 \text{ else } 0 \ast P_f(-1) \rightarrow 1
-```
+### 2.2. Punto 2: Agrupar con mapas
 
-Por otro lado, $f(0) = 0! = 1$. Entonces $P_f(0) == f(0)$.
+#### a) `porRegion(r)`
+* **Especificación matemática:** Sea $\text{Dom}(R) = \{ \pi_{\text{reg}}(s) \mid s \in R \}$. La función define un mapeo $M : \text{Dom}(R) \to \text{List}[\mathcal{S}]$ tal que:
+  $$\forall \rho \in \text{Dom}(R) : M(\rho) = \left[ t \in R \;\middle|\; \pi_{\text{reg}}(t) = \rho \right]$$
+* **Argumento de corrección:** Para cada elemento $s \in R$, se construye el par $(\pi_{\text{reg}}(s), L_{\pi_{\text{reg}}(s)})$, donde $L_{\rho}$ contiene todos los sismos de $R$ pertenecientes a $\rho$. Al aplicar `.toMap`, las claves repetidas colapsan en una única entrada del mapa asociada exactamente al mismo valor $L_\rho$, garantizando que $\text{Dom}(M) = \text{Dom}(R)$ y que ningún elemento fuera de $R$ sea incluido.
 
-**Caso de inducción:** $n = k + 1$, $k \geq 0$. Hay que demostrar:
-$P_f(k) == f(k) \rightarrow P_f(k + 1) == f(k + 1)$
+#### b) `conteoPorRegion(r)` y `magnitudMaxima(r)`
+* **Especificación matemática:**
+  $$M_{\text{conteo}}(\rho) = |M(\rho)|, \qquad M_{\text{max}}(\rho) = \max_{s \in M(\rho)} \pi_m(s)$$
+* **Argumento de corrección:** Dado que `porRegion(r)` garantiza que para toda clave $\rho \in \text{Dom}(M)$, la lista $M(\rho)$ es no vacía ($|M(\rho)| \geq 1$), la operación `.length` devuelve el cardinal exacto de sismos en $\rho$, y la operación `.max` sobre la proyección de magnitudes está siempre bien definida (sin riesgo de excepción por colección vacía).
 
-```math
-P_f(k+1) \rightarrow \text{if } (k+1 == 0)\ 1 \text{ else } (k+1) \ast P_f(k) \rightarrow (k+1) \ast P_f(k)
-```
+---
 
-Usando la hipótesis de inducción (HI):
+### 2.3. Punto 3: Consultas seguras
 
-```math
-\rightarrow (k+1) \ast k! = (k+1)!
-```
+#### a) `conteoSeguro(r)` y `maximaDe(r, region)`
+* **Corrección:**
+  * `withDefaultValue(0)` extiende la función parcial $M_{\text{conteo}} : \text{Dom}(R) \to \mathbb{N}$ a una función total $M'_{\text{conteo}} : \text{String} \to \mathbb{N}$ definida como:
+    $$M'_{\text{conteo}}(\rho) = \begin{cases} M_{\text{conteo}}(\rho) & \text{si } \rho \in \text{Dom}(R) \\ 0 & \text{si } \rho \notin \text{Dom}(R) \end{cases}$$
+  * `.get(region)` eleva el codominio de $M_{\text{max}}$ al tipo opción $\text{Option}[\mathbb{R}]$, retornando $\text{Some}(M_{\text{max}}(\rho))$ si $\rho \in \text{Dom}(R)$ y $\text{None}$ en caso contrario, eliminando cualquier fallo en tiempo de ejecución.
 
-Por lo tanto, $P_f(k + 1) == f(k + 1)$.
+#### b) `regionMasActiva(r)`
+* **Especificación matemática:** Sea la relación de orden total $\succ$ sobre pares $(\rho, c) \in \text{String} \times \mathbb{N}$ definida por:
+  $$(\rho_1, c_1) \succ (\rho_2, c_2) \iff (c_1 > c_2) \lor (c_1 = c_2 \land \rho_1 <_{\text{lex}} \rho_2)$$
+* **Argumento de corrección:** Si $R = [\,]$, `conteo` es vacío y retorna `None`. Si $R \neq [\,]$, la relación $\succ$ es irreflexiva, asimétrica y transitiva (un orden total estricto sobre claves únicas). Por tanto, `reduce` converge al único elemento maximal $(\rho^*, c^*)$ respecto a $\succ$, cumpliendo tanto el criterio de mayor frecuencia como el desempate lexicográfico.
 
-Concluimos por inducción que $\forall n \in \mathbb{N} : P_f(n) == n!$
+---
 
-### Ejemplo: el máximo de una lista
+### 2.4. Punto 4: Réplicas perezosas
 
-Sea $f : \text{List}[\mathbb{N}] \to \mathbb{N}$ la función que calcula el
-máximo de una lista de enteros positivos, no vacía. Y sea $P_f$ el siguiente
-programa en Scala:
+#### a) `replicas(magnitud)`
+* **Definición por coinducción:** La secuencia infinita $S(m_0) = [a_0, a_1, a_2, \ldots]$ se define mediante la ecuación recurrente:
+  $$a_n = \text{redondear}(m_0 \cdot 0.8^n), \quad \forall n \in \mathbb{N}$$
+  En el código, `redondear(magnitud) #:: replicas(magnitud * 0.8)` construye la cabeza $a_0 = \text{redondear}(m_0)$ y suspende el cálculo de la cola mediante evaluación por necesidad (*call-by-need*) con el operador `#::`.
 
-```scala
-def maxLin(l: List[Int]): Int = {
-  if (l.tail.isEmpty) l.head
-  else math.max(maxLin(l.tail), l.head)
-}
-```
+#### b) `replicasSensibles(magnitud, minimo)`
+* **Argumento de terminación y corrección:**
+  $$\text{replicasSensibles}(m_0, \mu) = \left[ a_0, a_1, \ldots, a_{k-1} \right] \quad \text{donde } k = \min \{ n \in \mathbb{N} \mid a_n \leq \mu \}$$
+  Como $0 < 0.8 < 1$, para cualquier magnitud inicial $m_0 > 0$ la sucesión geométrica $m_0 \cdot 0.8^n$ es estrictamente decreciente y converge a $0$:
+  $$\lim_{n \to \infty} m_0 \cdot 0.8^n = 0$$
+  Dado que en la escala sísmica $\mu > 0$ (o para cualquier $\mu \geq 0$ tras redondeo a dos decimales, donde $a_n = 0.0$ para $n$ suficientemente grande), existe un índice finito $k \in \mathbb{N}$ tal que $a_k \leq \mu$. Por tanto, `takeWhile(_ > minimo)` siempre encuentra un elemento que falsifica el predicado en un número finito de pasos, garantizando la terminación de `.toList`.
 
-Demostraremos que:
+---
 
-```math
-\forall n \in \mathbb{N} \setminus \{0\} : P_f(\text{List}(a_1, a_2, \ldots, a_n)) == f(\text{List}(a_1, a_2, \ldots, a_n))
-```
+### 2.5. Punto 5: Informe combinado
 
-**Caso base:** $n = 1$
+#### `informe(r, minimo)`
+* **Especificación matemática:**
+  $$I(R, \mu) = \left\{ \rho \mapsto \text{Resumen}\left(M_{\text{conteo}}(\rho),\; M_{\text{max}}(\rho),\; |\text{replicasSensibles}(M_{\text{max}}(\rho), \mu)|\right) \;\middle|\; \rho \in \text{Dom}(R) \right\}$$
+* **Argumento de corrección:** Las estructuras `conteos` y `magnitudMaxima(r)` comparten exactamente el mismo dominio $\text{Dom}(R)$ derivado de `porRegion(r)`. Por ello, para toda clave `reg` en `magnitudMaxima(r)`, la consulta `conteos(reg)` está garantizada dentro del dominio y combina de forma consistente las tres métricas por región.
 
-```math
-P_f(\text{List}(a_1)) \rightarrow \text{if } \text{List}(a_1).\text{tail.isEmpty then } \text{List}(a_1).\text{head else } \ldots \rightarrow \text{List}(a_1).\text{head} \rightarrow a_1
-```
-
-Por otro lado, $f(\text{List}(a_1)) = a_1$. Entonces
-$P_f(\text{List}(a_1)) == f(\text{List}(a_1))$.
-
-**Caso de inducción:** $n = k + 1$, $k \geq 1$. Se debe demostrar:
-
-```math
-P_f(\text{List}(b_1, b_2, \ldots, b_k)) == f(\text{List}(b_1, b_2, \ldots, b_k)) \rightarrow P_f(\text{List}(a_1, a_2, \ldots, a_{k+1})) == f(\text{List}(a_1, a_2, \ldots, a_{k+1}))
-```
-
-Empecemos por calcular qué devuelve $P_f$ usando el modelo de sustitución:
-
-```math
-P_f(L) \rightarrow \text{if } L.\text{tail.isEmpty then } L.\text{head else math.max}(P_f(L.\text{tail}), L.\text{head})
-```
-
-```math
-\rightarrow \text{math.max}(P_f(\text{List}(a_2, \ldots, a_{k+1})), a_1)
-```
-
-Sea $b = P_f(\text{List}(a_2, \ldots, a_{k+1}))$; por la hipótesis de
-inducción, $b = f(\text{List}(a_2, \ldots, a_{k+1}))$. Hay dos posibilidades:
-
-- Si $\text{math.max}(b, a_1) = b$, entonces $b \geq a_1$ y
- $b == f(\text{List}(a_1, a_2, \ldots, a_{k+1}))$.
-- Si $\text{math.max}(b, a_1) = a_1$, entonces $a_1 \geq b$ y
- $a_1 == f(\text{List}(a_1, a_2, \ldots, a_{k+1}))$.
-
-Por lo tanto, $P_f(L) == f(L)$.
-
-Concluimos por inducción que:
-
-```math
-\forall n \in \mathbb{N} \setminus \{0\} : P_f(\text{List}(a_1, a_2, \ldots, a_n)) == f(\text{List}(a_1, a_2, \ldots, a_n))
-```
-
-## 2. Argumentar la corrección de programas iterativos
-
-Para argumentar la corrección de programas iterativos, se debe formalizar cómo
-es la iteración. Esto implica definir:
-
-- Cómo se representa un estado de la iteración, $s$.
-- Cuál es el estado inicial, $s_0$.
-- Cuál es el estado final (o cómo se reconoce que un estado es final): $s_f$.
-- Qué condición (o predicado) cumple todo estado: $\text{Inv}(s)$ (invariante
-  de la iteración).
-- El mecanismo para pasar de un estado al siguiente: $\text{transformar}(s)$.
-  Si $s_i$ es el estado $i$, entonces $\text{transformar}(s_i) = s_{i+1}$.
-
-Un programa iterativo tiene la siguiente forma:
-
-```scala
-def Pf(a: A): B = { // Pf recibe a de tipo A, y devuelve f(a) de tipo B
-  def Pf_iter(s: Estado): B =
-    if (esFinal(s)) respuesta(s) else Pf_iter(transformar(s))
-  Pf_iter(s0)
-}
-```
-
-Demostración de corrección:
-
-- $\text{Inv}(s_0)$: el estado inicial cumple la condición invariante.
-- Si $(s_i \neq s_f \land \text{Inv}(s_i)) \rightarrow \text{Inv}(\text{transformar}(s_i))$:
-  el nuevo estado cumple la condición invariante si el estado anterior la
-  cumplía.
-- De lo anterior se concluye $\text{Inv}(s_f)$, es decir, el estado final
-  cumple la condición invariante. Luego,
-  $\text{Inv}(s_f) \rightarrow \text{respuesta}(s_f) == f(a)$.
-- Finalmente, demostrar que siempre se llega al estado final $s_f$. Esto
-  implica que
-  $P_f(a) == \text{iter}(s_0) == \text{respuesta}(s_f) == f(a)$.
-
-### Ejemplo: factorial iterativo
-
-Considere el siguiente programa iterativo en Scala para calcular la función
-factorial:
-
-```scala
-def Pf(n: Int): Int = { // Pf recibe n de tipo Int, y devuelve n! de tipo Int
-  def Pf_iter(i: Int, n: Int, ac: Int): Int =
-    if (i > n) ac else Pf_iter(i + 1, n, i * ac)
-  Pf_iter(1, n, 1)
-}
-```
-
-Este programa implementa el siguiente proceso iterativo:
-
-- Un estado $s = (i, n, ac)$.
-- El estado inicial es $s_0 = (1, n, 1)$.
-- $(i, n, ac)$ es final si $i > n$, o lo que es lo mismo, si $i = n + 1$.
-- La invariante de ciclo es
-  $\text{Inv}(i, n, ac) \equiv i \leq n + 1 \land ac = (i-1)!$.
-  La invariante de ciclo es una relación que SIEMPRE se cumple en el ciclo.
-- $\text{transformar}((i, n, ac)) = (i+1, n, i \ast ac)$.
-
-Ahora, demostramos los puntos mencionados:
-
-**1.** $\text{Inv}(s_0)$: el estado inicial cumple la condición invariante.
-
-```math
-s_0 = (1, n, 1) \implies 1 \leq n + 1 \land 1 = 0!
-```
-
-**2.** La invariante se mantiene con la transformación de estados,
-$(s_i \neq s_f \land \text{Inv}(s_i)) \rightarrow \text{Inv}(\text{transformar}(s_i))$:
-
-1. Primer cambio, $i = i + 1$, lo que implica $ac = ((i+1) - 1)! = i!$.
-2. Segundo cambio, $ac = i \ast ac$, entonces $ac = (i - 1)! \ast i = i!$.
-3. Como se puede ver en ambos cambios indicados en la transformación, la
-   invariante se mantiene.
-
-**3.** $\text{Inv}(s_f) \rightarrow \text{respuesta}(s_f) == f(a)$
-
-```math
-(n + 1 \leq n + 1) \land ac = ((n+1)-1)! \rightarrow ac == n!
-```
-
-**4.** En cada paso, la componente $i$ del estado incrementa, acercándose a $n+1$.
-Después de $n$ iteraciones, se alcanza $n+1$.
-
-Esto implica que $P_f(n) == \text{iter}(1, n, 1) == n!$
-
-### Ejemplo: el máximo de una lista
-
-Se desea calcular el máximo de una lista de enteros positivos, no vacía. Sea
-$f : \text{List}[\mathbb{N}] \to \mathbb{N}$ la función que calcula ese valor.
-Y sea $P_f$ el siguiente programa en Scala:
-
-```scala
-def maxIt(l: List[Int]): Int = {
-  def maxAux(max: Int, l: List[Int]): Int = {
-    if (l.isEmpty) max
-    else maxAux(math.max(max, l.head), l.tail)
-  }
-  maxAux(l.head, l.tail)
-}
-```
-
-Este programa implementa el siguiente proceso iterativo:
-
-- Un estado $s = (max, l)$ donde $l = \text{List}(a_i, a_{i+1}, \ldots, a_k)$
-  es una cola de $L$.
-- El estado inicial es
-  $s_0 = (L.\text{head}, L.\text{tail}) = (a_1, \text{List}(a_2, \ldots, a_k))$.
-- $s = (max, l)$ es final si $l$ es vacía.
-- $\text{Inv}(max, l) \equiv l = \text{List}(a_i, a_{i+1}, \ldots, a_k) \land max = f(\text{List}(a_1, a_2, \ldots, a_{i-1}))$.
-- $\text{transformar}((max, l)) = (nmax, l.\text{tail})$ donde $nmax = max$ si
-  $max \geq l.\text{head}$, y $nmax = l.\text{head}$ si no.
-
-Demostración de los puntos:
-
-**1.** $\text{Inv}(s_0)$: el estado inicial cumple la condición invariante.
-
-```math
-s_0 = (a_1, \text{List}(a_2, \ldots, a_k)) \implies a_1 = f(\text{List}(a_1))
-```
-
-**2.** $(s_i \neq s_f \land \text{Inv}(s_i)) \rightarrow \text{Inv}(\text{transformar}(s_i))$
-
-```math
-\neg\, l.\text{isEmpty} \land l = \text{List}(a_i, a_{i+1}, \ldots, a_k) \land max = f(\text{List}(a_1, a_2, \ldots, a_{i-1}))
-```
-
-```math
-\rightarrow l.\text{tail} = \text{List}(a_{i+1}, \ldots, a_k) \land nmax = f(\text{List}(a_1, \ldots, a_i))
-```
-
-**3.** $\text{Inv}(s_f) \rightarrow \text{respuesta}(s_f) == f(a)$
-
-```math
-\text{Inv}((max, \text{List}())) \rightarrow max = f(\text{List}(a_1, \ldots, a_k))
-```
-
-**4.** En cada paso, la lista $l$ se reduce, acercándose a ser vacía. Después de
-$k$ iteraciones, $l = \text{List}()$.
-
-Esto implica que $P_f(L) == \text{maxAux}(L.\text{head}, L.\text{tail}) == f(L)$
