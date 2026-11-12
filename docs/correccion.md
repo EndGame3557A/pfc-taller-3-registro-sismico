@@ -96,3 +96,22 @@ A diferencia de los programas imperativos o recursivos explícitos, las funcione
   $$I(R, \mu) = \left\{ \rho \mapsto \text{Resumen}\left(M_{\text{conteo}}(\rho),\; M_{\text{max}}(\rho),\; |\text{replicasSensibles}(M_{\text{max}}(\rho), \mu)|\right) \;\middle|\; \rho \in \text{Dom}(R) \right\}$$
 * **Argumento de corrección:** Las estructuras `conteos` y `magnitudMaxima(r)` comparten exactamente el mismo dominio $\text{Dom}(R)$ derivado de `porRegion(r)`. Por ello, para toda clave `reg` en `magnitudMaxima(r)`, la consulta `conteos(reg)` está garantizada dentro del dominio y combina de forma consistente las tres métricas por región.
 
+---
+
+## 3. Invarianza respecto al orden de recorrido
+
+Un aspecto fundamental de la corrección de esta solución es que **los resultados esenciales de las consultas no dependen del orden en que se recorran los elementos del registro**, lo cual se justifica por las siguientes propiedades matemáticas y estructurales:
+
+1. **Conmutatividad y asociatividad de las operaciones de agregación:**
+* En `conteoPorRegion`, el tamaño de un conjunto filtrado $| \{ s \in R \mid \pi_{\text{reg}}(s) = \rho \} |$ depende únicamente de la función indicadora de pertenencia a la región $\rho$. La suma de unidades ($1 + 1 + \dots + 1$) es conmutativa y asociativa.
+* En `magnitudMaxima`, el operador $\max$ sobre números reales satisface $\max(x, y) = \max(y, x)$ y $\max(x, \max(y, z)) = \max(\max(x, y), z)$. Por lo tanto, el máximo de una región es invariante ante cualquier permutación $\sigma(R)$ de la lista de entrada.
+
+2. **Independencia del orden en estructuras de tipo Mapa (`Map`):**
+* Un `Map[K, V]` representa matemáticamente una función finita (un conjunto de pares clave-valor sin orden intrínseco). Dos mapas $M_1$ y $M_2$ son iguales ($M_1 = M_2$) si y solo si tienen el mismo dominio y asignan el mismo valor a cada clave, independientemente del orden en que las claves fueron insertadas o recorridas.
+* En `regionMasActiva`, el operador de reducción $\succ$ define un **orden total estricto** (gracias al desempate alfabético $\rho_1 <_{\text{lex}} \rho_2$). Al ser un orden total sobre claves únicas, el elemento máximo es único y el resultado de `reduce` es completamente independiente del orden interno de iteración del mapa.
+
+3. **Simetría en `paresCercanos`:**
+* La condición de cercanía $|\pi_m(x) - \pi_m(y)| \leq d$ es simétrica ($|a - b| = |b - a|$), por lo que la existencia de un par de sismos cercanos entre dos regiones $A$ y $B$ es una propiedad del conjunto de eventos y no de su ordenamiento secuencial. *(Nota: únicamente el orden de presentación de las listas de salida en el Punto 1 y la orientación de la tupla $(\rho_i, \rho_j)$ reflejan el orden de aparición solicitado explícitamente por el enunciado).*
+
+4. **Ausencia de estado mutable y efectos secundarios:**
+* Todas las funciones son **puras** (transparencia referencial): no existen acumuladores mutables (`var`) ni ciclos imperativos cuyo estado intermedio dependa del historial de iteración. Cada transformación opera sobre colecciones inmutables, garantizando determinismo total ante cualquier estrategia de evaluación.
