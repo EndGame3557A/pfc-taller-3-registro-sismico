@@ -265,8 +265,19 @@ class RegistroSismicoTest extends AnyFunSuite {
     assert(porRegion(registro).keySet == regionesUnicas)
   }
 
-  test("conteoPorRegion: las claves corresponden a las regiones presentes") {
-    assert(conteoPorRegion(registro).keySet.subsetOf(registro.map(_.region).toSet))
+  test("conteoPorRegion: registro propio con dos regiones") {
+    val propio = List(
+      Sismo(Fecha(2025, 1), "A", 4.0, 10), Sismo(Fecha(2025, 1), "B", 4.0, 10),
+      Sismo(Fecha(2025, 2), "A", 5.0, 10), Sismo(Fecha(2025, 3), "A", 6.0, 10),
+      Sismo(Fecha(2025, 3), "B", 3.0, 10))
+    assert(conteoPorRegion(propio) == Map("A" -> 3, "B" -> 2))
+  }
+
+  test("porRegion: los sismos del Valle quedan en el orden del registro") {
+    assert(porRegion(registro)("Valle") == List(
+      Sismo(Fecha(2025, 3), "Valle", 4.2, 30),
+      Sismo(Fecha(2025, 4), "Valle", 3.8, 25),
+      Sismo(Fecha(2025, 5), "Valle", 5.3, 35)))
   }
 
   // Punto 3
@@ -322,31 +333,29 @@ class RegistroSismicoTest extends AnyFunSuite {
     assert(elems == List(10.0, 8.0, 6.4))
   }
 
-  test("replicas: perezosidad permite tomar una gran cantidad de elementos sin desbordar") {
-    val lazySeq = replicas(8.0)
-    assert(lazySeq.drop(100).head.isInstanceOf[Double])
-  }
-
   test("replicasSensibles: valor ligeramente superior al mínimo incluye el elemento") {
     assert(replicasSensibles(5.0, 3.99) == List(5.0, 4.0))
-  }
-
-  test("replicasSensibles: con umbral cero incluye multiples elementos positivos") {
-    assert(replicasSensibles(2.0, 0.0).length > 2)
   }
 
   test("replicasSensibles: magnitud inicial menor al mínimo retorna lista vacía") {
     assert(replicasSensibles(1.0, 1.5) == List())
   }
 
-  test("replicas: elemento individual de cabeza coincide con el argumento inicial redondeado") {
-    val mag = 6.255
-    assert(replicas(mag).head == redondear(mag))
-  }
-
   test("replicasSensibles: elementos devueltos cumplen estrictamente la condición de ser mayores al mínimo") {
     val res = replicasSensibles(6.0, 2.5)
     assert(res.forall(_ > 2.5))
+  }
+
+  test("replicas: las primeras cinco de un sismo de 10.0") {
+    assert(replicas(10.0).take(5).toList == List(10.0, 8.0, 6.4, 5.12, 4.1))
+  }
+
+  test("replicas: lejos en la secuencia ya se llega a 0.0 sin colgarse") {
+    assert(replicas(5.0).drop(1000).take(2).toList == List(0.0, 0.0))
+  }
+
+  test("replicasSensibles: 4.0 con mínimo 2.0 da cuatro réplicas") {
+    assert(replicasSensibles(4.0, 2.0) == List(4.0, 3.2, 2.56, 2.05))
   }
 
   // Punto 5
@@ -381,12 +390,14 @@ class RegistroSismicoTest extends AnyFunSuite {
     assert(inf("Cundinamarca") == Resumen(1, 4.0, replicasSensibles(4.0, 2.0).length))
   }
 
-  test("informe: número de réplicas es no negativo para cualquier umbral razonable") {
-    val inf = informe(registro, 3.0)
-    assert(inf.values.forall(_.replicas >= 0))
-  }
-
   test("informe: la cantidad de entradas en el mapa de informe coincide con el total de regiones") {
     assert(informe(registro, 3.0).size == 3)
+  }
+
+  test("informe: con mínimo 4.0 cada región tiene 2 réplicas sensibles") {
+    assert(informe(registro, 4.0) == Map(
+      "Valle" -> Resumen(3, 5.3, 2),
+      "Santander" -> Resumen(2, 5.1, 2),
+      "Choco" -> Resumen(2, 6.0, 2)))
   }
 }
