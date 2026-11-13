@@ -94,13 +94,14 @@ A diferencia de los programas imperativos o recursivos explícitos, las funcione
 #### `informe(r, minimo)`
 * **Especificación matemática:**
   $$
-  I(R, \mu) = \left\{
+  I(R, \mu) =
+  \left\{
   \rho \mapsto \text{Resumen}\left(
   M_{\text{conteo}}(\rho),
   M_{\text{max}}(\rho),
   |\text{replicasSensibles}(M_{\text{max}}(\rho), \mu)|
   \right)
-  \;\middle|\;
+  \;:\;
   \rho \in \text{Dom}(R)
   \right\}
   $$
