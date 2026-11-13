@@ -92,21 +92,26 @@ A diferencia de los programas imperativos o recursivos explícitos, las funcione
 ### 2.5. Punto 5: Informe combinado
 
 #### `informe(r, minimo)`
-* **Especificación matemática:**
-  $$
-  I(R, \mu) =
-  \left\{
-  \rho \mapsto
-  \text{Resumen}\left(
-  M_{\text{conteo}}(\rho),
-  M_{\text{max}}(\rho),
-  \left|\text{replicasSensibles}(M_{\text{max}}(\rho), \mu)\right|
-  \right)
-  \;:\;
-  \rho \in \text{Dom}(R)
-  \right\}
-  $$
-* **Argumento de corrección:** Las estructuras `conteos` y `magnitudMaxima(r)` comparten exactamente el mismo dominio $\text{Dom}(R)$ derivado de `porRegion(r)`. Por ello, para toda clave `reg` en `magnitudMaxima(r)`, la consulta `conteos(reg)` está garantizada dentro del dominio y combina de forma consistente las tres métricas por región.
+
+**Especificación matemática:**
+
+$$
+I(R,\mu)=
+\lbrace\,
+\rho \mapsto
+\text{Resumen}\Big(
+M_{\text{conteo}}(\rho),\;
+M_{\text{max}}(\rho),\;
+\lvert \text{replicasSensibles}\big(M_{\text{max}}(\rho),\mu\big)\rvert
+\Big)
+\;:\;
+\rho\in\text{Dom}(R)
+\,\rbrace
+$$
+
+**Argumento de corrección:** Las estructuras `conteos` y `magnitudMaxima(r)` comparten exactamente el mismo dominio $\text{Dom}(R)$, derivado de `porRegion(r)`. Por ello, para toda clave `reg` en `magnitudMaxima(r)`, la consulta `conteos(reg)` está garantizada dentro del dominio y combina de forma consistente las tres métricas por región.
+
+El tercer campo del `Resumen` es, por definición, $\lvert \text{replicasSensibles}(M_{\text{max}}(\rho),\mu)\rvert$, y la igualdad entre el mapa producido y la especificación $I(R,\mu)$ se cumple clave a clave sobre $\text{Dom}(R)$.
 
 ---
 
