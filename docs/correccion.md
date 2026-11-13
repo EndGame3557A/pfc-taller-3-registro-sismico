@@ -93,7 +93,17 @@ A diferencia de los programas imperativos o recursivos explícitos, las funcione
 
 #### `informe(r, minimo)`
 * **Especificación matemática:**
-  $$I(R, \mu) = \left\{ \rho \mapsto \text{Resumen}\left(M_{\text{conteo}}(\rho),\; M_{\text{max}}(\rho),\; |\text{replicasSensibles}(M_{\text{max}}(\rho), \mu)|\right) \;\middle|\; \rho \in \text{Dom}(R) \right\}$$
+  $$
+  I(R, \mu) = \left\{
+  \rho \mapsto \text{Resumen}\left(
+  M_{\text{conteo}}(\rho),
+  M_{\text{max}}(\rho),
+  |\text{replicasSensibles}(M_{\text{max}}(\rho), \mu)|
+  \right)
+  \;\middle|\;
+  \rho \in \text{Dom}(R)
+  \right\}
+  $$
 * **Argumento de corrección:** Las estructuras `conteos` y `magnitudMaxima(r)` comparten exactamente el mismo dominio $\text{Dom}(R)$ derivado de `porRegion(r)`. Por ello, para toda clave `reg` en `magnitudMaxima(r)`, la consulta `conteos(reg)` está garantizada dentro del dominio y combina de forma consistente las tres métricas por región.
 
 ---

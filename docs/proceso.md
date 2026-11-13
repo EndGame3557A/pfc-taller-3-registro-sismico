@@ -405,7 +405,7 @@ def porRegion(r: Registro): Map[String, List[Sismo]] =
   ).toMap
 ```
 
-La implementación realiza dos recorridos.
+La implementación realiza un recorrido exterior y, por cada sismo, vuelve a recorrer el registro completo para encontrar los elementos de su región.
 
 #### Traducción del `for` exterior
 
