@@ -18,18 +18,18 @@ El taller proporciona los siguientes tipos de datos, que se conservan sin modifi
 case class Fecha(anio: Int, mes: Int)
 
 case class Sismo(
-                        fecha: Fecha,
-                        region: String,
-                        magnitud: Double,
-                        profundidad: Int
+                  fecha: Fecha,
+                  region: String,
+                  magnitud: Double,
+                  profundidad: Int
                 )
 
 type Registro = List[Sismo]
 
 case class Resumen(
-                          sismos: Int,
-                          maxima: Double,
-                          replicas: Int
+                    sismos: Int,
+                    maxima: Double,
+                    replicas: Int
                   )
 ```
 
@@ -39,13 +39,13 @@ Para realizar las trazas de las funciones se utiliza el registro de ejemplo prop
 
 ```scala
 val registro = List(
-   Sismo(Fecha(2025, 3), "Valle",     4.2, 30),
-   Sismo(Fecha(2025, 3), "Santander", 5.1, 150),
-   Sismo(Fecha(2025, 4), "Valle",     3.8, 25),
-   Sismo(Fecha(2025, 4), "Choco",     6.0, 40),
-   Sismo(Fecha(2025, 5), "Santander", 4.7, 160),
-   Sismo(Fecha(2025, 5), "Valle",     5.3, 35),
-   Sismo(Fecha(2025, 6), "Choco",     3.1, 20)
+  Sismo(Fecha(2025, 3), "Valle",     4.2, 30),
+  Sismo(Fecha(2025, 3), "Santander", 5.1, 150),
+  Sismo(Fecha(2025, 4), "Valle",     3.8, 25),
+  Sismo(Fecha(2025, 4), "Choco",     6.0, 40),
+  Sismo(Fecha(2025, 5), "Santander", 4.7, 160),
+  Sismo(Fecha(2025, 5), "Valle",     5.3, 35),
+  Sismo(Fecha(2025, 6), "Choco",     3.1, 20)
 )
 ```
 
@@ -104,15 +104,15 @@ Equivale a:
 
 ```scala
 xs.withFilter(x => p(x))
-        .map(x => f(x))
+  .map(x => f(x))
 ```
 
 **Dos generadores:**
 
 ```scala
 for {
-   x <- xs
-   y <- ys
+  x <- xs
+  y <- ys
 } yield f(x, y)
 ```
 
@@ -120,7 +120,7 @@ Equivale a:
 
 ```scala
 xs.flatMap(x =>
-   ys.map(y => f(x, y))
+  ys.map(y => f(x, y))
 )
 ```
 
@@ -939,9 +939,9 @@ Mapa de conteos:
 
 ```scala
 Map(
-   "Valle" -> 3,
-   "Santander" -> 2,
-   "Choco" -> 2
+  "Valle" -> 3,
+  "Santander" -> 2,
+  "Choco" -> 2
 )
 ```
 
@@ -949,9 +949,9 @@ Mapa de magnitudes máximas:
 
 ```scala
 Map(
-   "Valle" -> 5.3,
-   "Santander" -> 5.1,
-   "Choco" -> 6.0
+  "Valle" -> 5.3,
+  "Santander" -> 5.1,
+  "Choco" -> 6.0
 )
 ```
 
@@ -993,9 +993,9 @@ El resultado final es:
 
 ```scala
 Map(
-   "Valle" -> Resumen(3, 5.3, 3),
-   "Santander" -> Resumen(2, 5.1, 3),
-   "Choco" -> Resumen(2, 6.0, 4)
+  "Valle" -> Resumen(3, 5.3, 3),
+  "Santander" -> Resumen(2, 5.1, 3),
+  "Choco" -> Resumen(2, 6.0, 4)
 )
 ```
 
@@ -1017,16 +1017,16 @@ El siguiente diagrama representa el recorrido general de la información desde e
 
 ```mermaid
 flowchart TD
-   A["Registro de sismos"] --> B["Consultas con for"]
-   B --> C["Agrupamiento por región"]
-   C --> D["Conteo por región"]
-   C --> E["Magnitud máxima"]
-   D --> F["Consultas seguras"]
-   E --> F
-   D --> G["Informe combinado"]
-   E --> G
-   H["Generación de réplicas"] --> G
-   G --> I["Mapa de resúmenes"]
+    A["Registro de sismos"] --> B["Consultas con for"]
+    B --> C["Agrupamiento por región"]
+    C --> D["Conteo por región"]
+    C --> E["Magnitud máxima"]
+    D --> F["Consultas seguras"]
+    E --> F
+    D --> G["Informe combinado"]
+    E --> G
+    H["Generación de réplicas"] --> G
+    G --> I["Mapa de resúmenes"]
 ```
 
 ### 8.2. Traducción de las expresiones `for`
@@ -1035,15 +1035,15 @@ El diagrama resume las operaciones que intervienen en la traducción de las comp
 
 ```mermaid
 flowchart TD
-   A["Expresión for con yield"] --> B{"¿Cuántos generadores hay?"}
-   B -->|"Uno"| C["map"]
-   B -->|"Varios"| D["flatMap en generadores anteriores"]
-   D --> E["map en el último generador"]
-   C --> F{"¿Hay condición if?"}
-   E --> F
-   F -->|"Sí"| G["withFilter antes de map"]
-   F -->|"No"| H["Resultado de la transformación"]
-   G --> H
+    A["Expresión for con yield"] --> B{"¿Cuántos generadores hay?"}
+    B -->|"Uno"| C["map"]
+    B -->|"Varios"| D["flatMap en generadores anteriores"]
+    D --> E["map en el último generador"]
+    C --> F{"¿Hay condición if?"}
+    E --> F
+    F -->|"Sí"| G["withFilter antes de map"]
+    F -->|"No"| H["Resultado de la transformación"]
+    G --> H
 ```
 
 En las comprensiones utilizadas en el taller, `withFilter` representa las condiciones de selección, `flatMap` permite combinar los recorridos de varios generadores y `map` transforma los elementos seleccionados.
@@ -1054,22 +1054,22 @@ El siguiente diagrama representa la solicitud progresiva de elementos de una sec
 
 ```mermaid
 sequenceDiagram
-   participant U as Usuario
-   participant L as LazyList
-   participant T as takeWhile
-   participant R as Resultado
+    participant U as Usuario
+    participant L as LazyList
+    participant T as takeWhile
+    participant R as Resultado
 
-   U->>T: Solicita réplicas sensibles
-   T->>L: Solicita siguiente elemento
-   L-->>T: 5.0
-   T->>L: Solicita siguiente elemento
-   L-->>T: 4.0
-   T->>L: Solicita siguiente elemento
-   L-->>T: 3.2
-   T->>L: Solicita siguiente elemento
-   L-->>T: 2.56
-   Note over T: 2.56 no supera el mínimo
-   T->>R: Entrega el prefijo obtenido
+    U->>T: Solicita réplicas sensibles
+    T->>L: Solicita siguiente elemento
+    L-->>T: 5.0
+    T->>L: Solicita siguiente elemento
+    L-->>T: 4.0
+    T->>L: Solicita siguiente elemento
+    L-->>T: 3.2
+    T->>L: Solicita siguiente elemento
+    L-->>T: 2.56
+    Note over T: 2.56 no supera el mínimo
+    T->>R: Entrega el prefijo obtenido
 ```
 
 El diagrama muestra que la secuencia se evalúa progresivamente. No es necesario calcular todos sus elementos para obtener el prefijo que cumple la condición.
