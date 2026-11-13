@@ -96,10 +96,11 @@ A diferencia de los programas imperativos o recursivos explícitos, las funcione
   $$
   I(R, \mu) =
   \left\{
-  \rho \mapsto \text{Resumen}\left(
+  \rho \mapsto
+  \text{Resumen}\left(
   M_{\text{conteo}}(\rho),
   M_{\text{max}}(\rho),
-  |\text{replicasSensibles}(M_{\text{max}}(\rho), \mu)|
+  \left|\text{replicasSensibles}(M_{\text{max}}(\rho), \mu)\right|
   \right)
   \;:\;
   \rho \in \text{Dom}(R)
