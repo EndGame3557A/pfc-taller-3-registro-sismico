@@ -771,12 +771,11 @@ La función `replicas` genera una secuencia infinita de magnitudes. Cada nueva m
 La implementación utiliza `LazyList` y el operador `#::`. Siguiendo la indicación de la entrega, la función auxiliar de redondeo se define **dentro** de `replicas`, sin crearla por fuera:
 
 ```scala
-def replicas(magnitud: Double): LazyList[Double] = {
-  def redondear(x: Double): Double =
-    Math.round(x * 100.0) / 100.0
+def redondear(x: Double): Double =
+  Math.round(x * 100.0) / 100.0
 
+def replicas(magnitud: Double): LazyList[Double] =
   redondear(magnitud) #:: replicas(magnitud * 0.8)
-}
 ```
 
 El primer elemento corresponde a la magnitud recibida, redondeada a dos decimales. El resto de la secuencia se genera utilizando la magnitud multiplicada por 0.8.
