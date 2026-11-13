@@ -334,13 +334,13 @@ Su traducción es:
 
 ```scala
 r.withFilter(x => x.region == a)
- .flatMap(x =>
-   r.withFilter(y => y.region == b)
-    .withFilter(y =>
-      Math.abs(x.magnitud - y.magnitud) <= dif
-    )
-    .map(y => true)
- )
+  .flatMap(x =>
+    r.withFilter(y => y.region == b)
+      .withFilter(y =>
+        Math.abs(x.magnitud - y.magnitud) <= dif
+      )
+      .map(y => true)
+  )
 ```
 
 El primer generador selecciona los sismos de la región `a`. Para cada uno, el segundo generador recorre el registro y selecciona los sismos de la región `b`.
@@ -401,8 +401,8 @@ Código completo:
 def porRegion(r: Registro): Map[String, List[Sismo]] =
   (for (s <- r) yield
     (s.region,
-     for (t <- r if t.region == s.region) yield t)
-  ).toMap
+      for (t <- r if t.region == s.region) yield t)
+    ).toMap
 ```
 
 La implementación realiza dos recorridos.
@@ -436,7 +436,7 @@ Se traduce a:
 
 ```scala
 r.withFilter(t => t.region == s.region)
- .map(t => t)
+  .map(t => t)
 ```
 
 Este recorrido vuelve a examinar el registro completo y conserva únicamente los sismos que pertenecen a la región del sismo exterior.
@@ -830,9 +830,9 @@ Su implementación utiliza `takeWhile` y posteriormente convierte el resultado e
 
 ```scala
 def replicasSensibles(
-  magnitud: Double,
-  minimo: Double
-): List[Double] =
+                       magnitud: Double,
+                       minimo: Double
+                     ): List[Double] =
   replicas(magnitud).takeWhile(_ > minimo).toList
 ```
 
@@ -898,10 +898,10 @@ El modelo de datos utilizado es:
 
 ```scala
 case class Resumen(
-  sismos: Int,
-  maxima: Double,
-  replicas: Int
-)
+                    sismos: Int,
+                    maxima: Double,
+                    replicas: Int
+                  )
 ```
 
 Código completo:
